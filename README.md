@@ -16,7 +16,7 @@ Incorporating the Power-Input Log into Windows 11 will involve utilizing system 
 ### Python Code Implementation
 
 ```
-import time![Power-Input Log](https://github.com/user-attachments/assets/2fe16f2a-9ffc-484d-900f-53274301eec1)
+import time!
 
 import datetime
 import os
