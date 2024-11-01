@@ -120,7 +120,7 @@ This Python script is a basic implementation of the Power-Input Log feature for 
 
 <br>
 </details>
-<details><summary>C++ Concept</summary>
+<details><summary>C++ Concept (Data-Time Log)</summary>
 <br>
 
 ```
