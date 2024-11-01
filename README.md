@@ -13,7 +13,9 @@ To effectively calculate these metrics, the system maintains logs that timestamp
 Incorporating the Power-Input Log into Windows 11 will involve utilizing system APIs to detect power state changes and input events, and then storing this data in a local database or log file. Users can access a simple interface that displays their computer's total running time since purchase, active input time, and idle time. This feature can also include options for exporting the log data for further analysis.
 
 #
-### Python Code Implementation
+
+<details><summary>Python Concepts</summary>
+<br>
 
 ```
 import time
@@ -115,6 +117,95 @@ calculate_statistics()
 ```
 
 This Python script is a basic implementation of the Power-Input Log feature for Windows 11. It tracks when the computer is powered on and monitors input activities using the pynput library. The script logs these activities and calculates total running time, active input time, and idle time. Note that additional error handling and integration with Windows-specific power events (like sleep, hibernate) would be necessary for a production environment.
+
+<br>
+</details>
+<details><summary>C++ Concept</summary>
+<br>
+
+```
+#include <iostream>
+#include <fstream>
+#include <windows.h>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+#include <thread>
+
+// Function to get the current date-time as a formatted string
+std::string getCurrentDateTime() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&now_c), "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+}
+
+// Function to get the system's idle time in milliseconds
+DWORD getIdleTime() {
+    LASTINPUTINFO lii;
+    lii.cbSize = sizeof(LASTINPUTINFO);
+    GetLastInputInfo(&lii);
+    return (GetTickCount() - lii.dwTime);
+}
+
+// Function to log data to file with timestamps
+void logToFile(const std::string& state, const std::string& startTime, const std::string& endTime, double duration) {
+    std::ofstream logFile("power_input_log.json", std::ios::app);
+    if (logFile.is_open()) {
+        logFile << "{\n";
+        logFile << "  \"state\": \"" << state << "\",\n";
+        logFile << "  \"start_time\": \"" << startTime << "\",\n";
+        logFile << "  \"end_time\": \"" << endTime << "\",\n";
+        logFile << "  \"duration_seconds\": " << duration << "\n";
+        logFile << "},\n";
+        logFile.close();
+    } else {
+        std::cerr << "Unable to open log file.\n";
+    }
+}
+
+int main() {
+    const DWORD idleThreshold = 5000; // 5 seconds threshold for idle detection
+    std::string currentState = "active";
+    std::string startTime = getCurrentDateTime();
+    
+    while (true) {
+        DWORD idleTime = getIdleTime();
+        std::string newState = (idleTime < idleThreshold) ? "active" : "idle";
+
+        // Check if state has changed from active to idle or vice versa
+        if (newState != currentState) {
+            std::string endTime = getCurrentDateTime();
+            auto duration = std::chrono::duration<double>(std::chrono::system_clock::now() - std::chrono::system_clock::from_time_t(std::time(0)));
+            logToFile(currentState, startTime, endTime, duration.count());
+            
+            // Update state and start time for new period
+            currentState = newState;
+            startTime = endTime;
+        }
+
+        // Add a delay to reduce CPU usage
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+
+        // Optional: Stop the program after a set duration for testing purposes
+        // This example runs for 1 minute (use this to limit the test duration)
+        auto programEndTime = std::chrono::steady_clock::now() + std::chrono::minutes(1);
+        if (std::chrono::steady_clock::now() >= programEndTime) {
+            break;
+        }
+    }
+
+    return 0;
+}
+```
+
+The Date-Time Log program developed in C++ serves as a precise tracking tool for monitoring active and idle times on a Windows computer. By leveraging the Windows API, it captures system idle periods based on user input inactivity and transitions between states, logging each active or idle period with exact timestamps. This allows it to accurately record the start and end times of each activity state, along with the duration in seconds. By outputting data in JSON format, the program provides structured and accessible logs that include details like the state (active or idle), start time, end time, and total duration. This level of logging is ideal for applications that require accurate monitoring of system usage, such as user behavior analysis, productivity tracking, or power management optimization.
+
+The program utilizes the <chrono> library to manage high-resolution time data, offering a reliable and cross-platform compatible method for date and time manipulation. The result is a user-friendly, efficient, and low-resource logging tool that runs continuously, only pausing when the system state changes. With adjustable idle thresholds and easy customization for different logging intervals, this program is a versatile solution for tracking computer usage. Additionally, the JSON log format facilitates easy integration into analytics tools or databases, making it simple for users to perform further analysis or visualization on the data. The program’s implementation as a standalone .exe makes it convenient for deployment on any Windows system, providing both personal users and enterprises with a powerful way to optimize their device usage.
+
+<br>
+</details>
 
 #
 ### Related Links
